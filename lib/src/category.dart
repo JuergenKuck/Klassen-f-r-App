@@ -1,15 +1,11 @@
-class Catagory {
+// backEnd DB
+class Category {
   // final properties:
+  final String id;
   final String name; //          z.B. Gebrauchsgegenstände, Sportarten,...
-  final bool isLocked; //        Die Kategorie kann nur verwendt werden, wenn
-  //                            diese freigeschaltet ist (isLocked=false).
   final List<String> prompts; // Begriffe, die eine Person darstellen muss
   final String urlImage; //      Image zur Kategorie
 
-  //additional properties:
-  bool isSelected = false;
-
   // constructor:
-  Catagory(this.name,
-      {required this.isLocked, required this.prompts, required this.urlImage});
+  Category(this.id, this.name, {required this.prompts, required this.urlImage});
 }
