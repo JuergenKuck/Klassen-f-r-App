@@ -1,4 +1,4 @@
-// frontEnd DB
+
 class GamePrompt {
   final String id;
   final String prompt; // Ein Prompt aus irgend einer Category

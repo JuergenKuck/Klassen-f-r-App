@@ -1,4 +1,4 @@
-// backEnd DB
+
 class Category {
   // final properties:
   final String id;

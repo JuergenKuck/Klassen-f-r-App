@@ -1,4 +1,4 @@
-// frontEnd DB
+
 class GameTeam {
   // final properties:
   final String id;

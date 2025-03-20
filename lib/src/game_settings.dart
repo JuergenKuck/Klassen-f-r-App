@@ -1,6 +1,6 @@
 import 'category.dart';
 
-// frontEnd DB
+
 class GameSettings {
   final int nPromptsInGame; //   Anzahl der Begriffe pro Spiel
   final int nSecondsPerRound; // Anzahl Sekunden pro Spielrunde

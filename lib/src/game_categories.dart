@@ -1,6 +1,6 @@
 import 'category.dart';
 
-// frontEnd DB
+
 class GameCategories {
   final String id;
   final List<Category> categories;
