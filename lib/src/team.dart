@@ -1,5 +1,4 @@
-
-class GameTeam {
+class Team {
   // final properties:
   final String id;
   final String name; //     Team-Name
@@ -8,6 +7,11 @@ class GameTeam {
   final int points; //  Punkte, die im Speil erworben werden
 
   // Constructor
-  GameTeam(this.id, this.name,
-      {required this.color, required this.urlImage, required this.points});
+  Team(
+    this.id,
+    this.name, {
+    required this.color,
+    required this.urlImage,
+    required this.points,
+  });
 }
