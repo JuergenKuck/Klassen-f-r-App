@@ -2,8 +2,15 @@ enum License { free, packageA, packageB, packageC, packageD, packageE }
 
 class User {
   final String id;
-  final String name;
+  final String firstName;
+  final String lastName;
   final String eMail;
-
-  User(String this.id, String this.name, String this.eMail, Enum license);
+  final License license;
+  User(
+    this.id, {
+    required this.firstName,
+    required this.lastName,
+    required this.eMail,
+    required this.license,
+  });
 }

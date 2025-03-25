@@ -7,18 +7,21 @@ import '../src/team.dart';
 abstract class DatabaseRepository {
   // User: der die App installiert hat
   void sendUser(User user);
-  User getUser(String UserId);
+  User getUser(String userId);
 
   // Setting; Spieleinstellungen
-  void sendSettings(String UserId);
-  Settings getSettings(String UserId);
+  void sendSettings(Settings settings);
+  Settings getSettings(String userId);
+
+  void clearCategoryIdsSelected(String userId);
 
   // Category:
 
   // Alle in DB gespeicherten Kategorien; Die Kategorien für das Spiel;
-  // isLocked ergibt sich aus der User.lizense,
-  // isSelected ist bei Start des Spiels false und wird erst in der UI festgelegt;
   List<Category> getAllCategories();
+
+  // Die vom User in der UI (Settings) ausgewählten Kategorien
+  //List<Category> getCategoriesSettings(String userId);
 
   // Prompt:
 
@@ -26,7 +29,7 @@ abstract class DatabaseRepository {
   // die in der UI selektiert wurden (Settings).
   // für das Spiel und die vorgegebene Anzahl der Begriffe zufällig ausgewählt
   // (Settings).
-  List<Prompt> getPromptsInGame();
+  List<Prompt> getPromptsInGame(String userId, List<Category> categoriesGame);
 
   // Hier werden nach jeder Runde die in dieser Runde behandelten Begriffe mit
   // der jeweiligen info von prompt.isSolved (aus UI)

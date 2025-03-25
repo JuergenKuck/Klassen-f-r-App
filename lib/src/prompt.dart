@@ -1,7 +1,10 @@
 class Prompt {
   final String id;
-  final String prompt; // Ein Prompt aus irgend einer Category
-  final bool isSolved; // Wurde der Prompt gelöst
+  final String categoryId;
+  final String text; // der zugehörige Text
+  Prompt(this.id, this.categoryId, this.text);
 
-  Prompt(this.id, this.prompt, this.isSolved);
+  Prompt clone() {
+    return Prompt(id, categoryId, text);
+  }
 }

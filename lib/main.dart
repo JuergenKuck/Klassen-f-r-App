@@ -1,12 +1,35 @@
 import 'dart:io';
 
+import '../step01_settings.dart';
+import 'src/MockDatabaseRepository.dart';
 import 'src/category.dart';
+import 'src/category_ids_selected.dart';
 import 'src/settings.dart';
 import 'src/team.dart';
+import 'src/user.dart';
 
 void main() {
   clearTerminal();
 
+  String userId = '05';
+
+  MockDatabaseRepository mockRep = MockDatabaseRepository();
+
+  mockRep.fillUsers();
+  mockRep.fillCategories();
+  mockRep.fillPrompts();
+
+  User user = mockRep.getUser(userId);
+  mockRep.clearCategoryIdsSelected(userId);
+
+  Step01Settings step01 = Step01Settings(userId, mockRep);
+
+  step01.initialValues();
+
+  /*
+
+  List<User>users=mockRep.getUser(userId)
+  
   List<String> prompts = ['Tischtennis, Volleyball'];
   Category sports = Category(
     '01',
@@ -41,6 +64,8 @@ void main() {
 
   print('${settings.categories[0].name}\n');
   print('${team.name}\n');
+
+  */
 }
 
 void clearTerminal() {
