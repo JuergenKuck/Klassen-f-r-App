@@ -1,7 +1,9 @@
 import 'dart:io';
 
-import '../step01_settings.dart';
-import 'src/MockDatabaseRepository.dart';
+import 'game.dart';
+import 'game_settings.dart';
+import 'interfaces/DatabaseRepository.dart';
+import 'mockups/MockDatabaseRepository.dart';
 import 'src/category.dart';
 import 'src/category_user_info.dart';
 import 'src/settings.dart';
@@ -13,59 +15,10 @@ void main() {
 
   String userId = '05';
 
-  MockDatabaseRepository mockRep = MockDatabaseRepository();
+  DatabaseRepository dbRep = MockDatabaseRepository();
 
-  mockRep.fillUsers();
-  mockRep.fillCategories();
-  mockRep.fillPrompts();
-
-  User user = mockRep.getUser(userId);
-
-  Step01Settings step01 = Step01Settings(userId, mockRep);
-
-  //step01.initialValues();
-  step01.run();
-
-  /*
-
-  List<User>users=mockRep.getUser(userId)
-  
-  List<String> prompts = ['Tischtennis, Volleyball'];
-  Category sports = Category(
-    '01',
-    'Sportarten',
-    prompts: prompts,
-    urlImage: 'sports.jpg',
-    isLocked: true,
-  );
-  Category nature = Category(
-    '02',
-    'Natur',
-    prompts: prompts,
-    urlImage: 'nature.jpg',
-    isLocked: true,
-  );
-
-  List<Category> categoriesInGame = [sports, nature];
-
-  Settings settings = Settings(
-    nPromptsInGame: 8,
-    nSecondsPerRound: 120,
-    nTeams: 2,
-    categories: categoriesInGame,
-  );
-  Team team = Team(
-    '01',
-    'Team1',
-    color: 'red',
-    urlImage: 'team1.jpg',
-    points: 10,
-  );
-
-  print('${settings.categories[0].name}\n');
-  print('${team.name}\n');
-
-  */
+  Game game = Game(userId, dbRep);
+  print('Ende\n');
 }
 
 void clearTerminal() {

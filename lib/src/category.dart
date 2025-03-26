@@ -11,10 +11,4 @@ class Category {
 
   // constructor:
   Category(this.id, this.name, {required this.urlImage, required this.license});
-
-  //gibt einen Klon zurück
-  Category clone() {
-    List<Prompt> _prompts = [];
-    return Category(id, name, urlImage: urlImage, license: license);
-  }
 }

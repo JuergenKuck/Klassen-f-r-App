@@ -1,4 +1,4 @@
-enum License { free, packageA, packageB, packageC, packageD, packageE }
+enum License { free, packageA, packageB }
 
 class User {
   final String id;

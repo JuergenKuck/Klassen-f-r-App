@@ -2,12 +2,13 @@ import 'dart:io';
 import 'dart:math';
 
 import '../interfaces/DatabaseRepository.dart';
-import 'category.dart';
-import 'category_user_info.dart';
-import 'prompt.dart';
-import 'settings.dart';
-import 'team.dart';
-import 'user.dart';
+import '../src/category.dart';
+import '../src/category_user_info.dart';
+import '../src/prompt.dart';
+import '../src/game_prompt_info.dart';
+import '../src/settings.dart';
+import '../src/team.dart';
+import '../src/user.dart';
 
 class MockDatabaseRepository extends DatabaseRepository {
   List<User> userMocks = [];
@@ -15,15 +16,22 @@ class MockDatabaseRepository extends DatabaseRepository {
   List<Settings> settingsMocks = [];
   List<Category> categoryMocks = [];
   List<Prompt> promptMocks = [];
-  List<CategoryUserInfo> CategoryUserInfoMocks = [];
+  List<CategoryUserInfo> categoryUserInfoMocks = [];
+  List<GamePromptInfo> gamePromptInfoMocks = [];
+
+  MockDatabaseRepository() {
+    fillUsers();
+    fillCategories();
+    fillPrompts();
+  }
 
   // User: der die App installiert hat
   @override
   void sendUser(User user) {
     // Wenn Mockliste schon einen passenden Eintrag hat,
     // wird der Eintrag überschrieben. Ansonsten wird er neu erzeugt.
-    if (userMocks.contains(user.id)) {
-      int index = userMocks.indexWhere((item) => item.id == user.id);
+    int index = userMocks.indexWhere((item) => item.id == user.id);
+    if (index >= 0) {
       userMocks[index] = user;
     } else {
       userMocks.add(user);
@@ -44,10 +52,10 @@ class MockDatabaseRepository extends DatabaseRepository {
   void sendSettings(Settings settings) {
     // Wenn in der settingsList schon eine settings mit userId existiert,
     // wird der Eintrag überschrieben. Ansonsten wird er neu erzeugt.
-    if (settingsMocks.contains(settings.userId)) {
-      int index = settingsMocks.indexWhere(
-        (item) => item.userId == settings.userId,
-      );
+    int index = settingsMocks.indexWhere(
+      (item) => item.userId == settings.userId,
+    );
+    if (index >= 0) {
       settingsMocks[index] = settings;
     } else {
       settingsMocks.add(settings);
@@ -59,8 +67,8 @@ class MockDatabaseRepository extends DatabaseRepository {
     // Wenn ein Eintrag für die userId in 'settingsList' existiert wird dieser
     // zurückgegeben. Ansonsten wird eine neue Settings mit Standardwerten
     // erzeugt, in 'settingsList' geadded und zurückgegeben.
-    if (settingsMocks.contains(userId)) {
-      int index = settingsMocks.indexWhere((item) => item.userId == userId);
+    int index = settingsMocks.indexWhere((item) => item.userId == userId);
+    if (index >= 0) {
       return settingsMocks[index];
     } else {
       //mit Standardwerten erzeugen
@@ -75,40 +83,52 @@ class MockDatabaseRepository extends DatabaseRepository {
     String userId,
     List<CategoryUserInfo> categoryUserInfos,
   ) {
-    if (CategoryUserInfoMocks.contains(categoryUserInfos[0].userId)) {
+    bool isContain = categoryUserInfoMocks.any(
+      (item) => item.userId == categoryUserInfos[0].userId,
+    );
+    if (isContain) {
       for (var category in categoryUserInfos) {
-        int index = CategoryUserInfoMocks.indexWhere(
+        int index = categoryUserInfoMocks.indexWhere(
           (item) =>
               item.userId == userId && item.categoryId == category.categoryId,
         );
-        CategoryUserInfoMocks[index] = category;
+        categoryUserInfoMocks[index] = category;
       }
     } else {
-      CategoryUserInfoMocks.addAll(categoryUserInfos);
+      categoryUserInfoMocks.addAll(categoryUserInfos);
     }
   }
 
-  List<CategoryUserInfo> GetCategoryUserInfos(String userId) {
-    if (CategoryUserInfoMocks.contains(userId)) {
-      return CategoryUserInfoMocks.where(
-        (item) => item.userId == userId,
-      ).toList();
+  List<CategoryUserInfo> getCategoryUserInfos(String userId) {
+    bool isContain = categoryUserInfoMocks.any((item) => item.userId == userId);
+    if (isContain) {
+      return categoryUserInfoMocks
+          .where((item) => item.userId == userId)
+          .toList();
     } else {
       List<CategoryUserInfo> result = [];
       List<Category> categories = getAllCategories();
       for (Category category in categories) {
         User user = getUser(userId);
+        // isLocked ist false, wenn die Lizens der users dies nicht zulässt.
+        // Wenn er die Kategorie verwenden will, muss er die entsprechende
+        // Lizenz erwerben.
         bool isLocked = user.license.index < category.license.index;
+
+        // IsSelected= true bedeutet, das der user im letzten Spiel mit dieser
+        // Kategorie gespielt hat. Im aller ersten Spiel wird die 1. Kategorie,
+        // die immer isLocked false ist, als selected gesetzt ist.
+        bool isSelected = category == categories.first;
 
         CategoryUserInfo categoryInGame = CategoryUserInfo(
           userId,
           categoryId: category.id,
           isLocked: isLocked,
-          isSelected: true,
+          isSelected: isSelected,
         );
         result.add(categoryInGame);
       }
-      CategoryUserInfoMocks.addAll(result);
+      categoryUserInfoMocks.addAll(result);
       return result;
     }
   }
@@ -128,39 +148,73 @@ class MockDatabaseRepository extends DatabaseRepository {
   // für das Spiel und die vorgegebene Anzahl der Begriffe zufällig ausgewählt
   // (Settings).
   @override
-  List<Prompt> getPromptsInGame(String userId) {
+  List<Prompt> getGamePrompts(String userId) {
     List<Prompt> result = [];
+
     Settings settings = getSettings(userId);
-    List<CategoryUserInfo> categoryUserInfos = GetCategoryUserInfos(userId);
     int nPromptGame = settings.nPromptsInGame; // Sollanzahl der Prompts
-    int nPrompt = promptMocks.length;
+    int nPrompt = promptMocks.length; // Gesamtzahl der Prompts
+
+    List<CategoryUserInfo> categoryUserInfos = getCategoryUserInfos(userId);
+
     Random random = Random();
     List<int> rnds = [];
     int? rndCurrent;
     Prompt? prompt;
+
     for (int i = 0; i < nPromptGame; i++) {
       bool isWhile = true;
       while (isWhile) {
         rndCurrent = random.nextInt(nPrompt);
-        prompt = promptMocks[rndCurrent];
-        for (var category in categoryUserInfos) {
-          if (category.isSelected) {
-            if (category.categoryId == prompt.categoryId) {
-              isWhile = false;
-              for (int rnd in rnds) {
-                if (rnd == rndCurrent) {
-                  isWhile = true;
-                  break;
-                }
-              }
-            }
-          }
+        if (!rnds.contains(rndCurrent)) {
+          prompt = promptMocks[rndCurrent];
+          int index = categoryUserInfos.indexWhere(
+            (item) => item.isSelected && item.categoryId == prompt?.categoryId,
+          );
+          isWhile = index < 0;
         }
       }
       rnds.add(rndCurrent!);
       result.add(prompt!);
     }
     return result;
+  }
+
+  @override
+  List<GamePromptInfo> getGamePromptInfos(
+    String userId,
+    List<Prompt> gamePrompts,
+  ) {
+    //vorherige PromptGameInfos der Users werden gelöscht.
+    gamePromptInfoMocks.removeWhere((item) => item.userId == userId);
+
+    //die neuen PromptGameInfos werden gesetzt
+    List<GamePromptInfo> result = [];
+    for (Prompt prompt in gamePrompts) {
+      result.add(GamePromptInfo(userId, prompt.id, isSolved: false));
+    }
+    return result;
+  }
+
+  @override
+  void sendGamePromptInfos(
+    String userId,
+    List<GamePromptInfo> gamePromptInfos,
+  ) {
+    List<GamePromptInfo> _gamePromptInfoMocks =
+        gamePromptInfoMocks.where((item) => item.userId == userId).toList();
+    if (_gamePromptInfoMocks.length > 0) {
+      for (var vMock in _gamePromptInfoMocks) {
+        int index = gamePromptInfos.indexWhere(
+          (item) => item.promptId == vMock.promptId,
+        );
+        if (index >= 0) {
+          vMock = gamePromptInfos[index];
+        }
+      }
+    } else {
+      gamePromptInfoMocks.addAll(gamePromptInfos);
+    }
   }
 
   // Hier werden nach jeder Runde die in dieser Runde behandelten Begriffe mit
