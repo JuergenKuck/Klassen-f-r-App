@@ -3,7 +3,7 @@ import 'dart:io';
 import '../step01_settings.dart';
 import 'src/MockDatabaseRepository.dart';
 import 'src/category.dart';
-import 'src/category_ids_selected.dart';
+import 'src/category_user_info.dart';
 import 'src/settings.dart';
 import 'src/team.dart';
 import 'src/user.dart';
@@ -20,11 +20,11 @@ void main() {
   mockRep.fillPrompts();
 
   User user = mockRep.getUser(userId);
-  mockRep.clearCategoryIdsSelected(userId);
 
   Step01Settings step01 = Step01Settings(userId, mockRep);
 
-  step01.initialValues();
+  //step01.initialValues();
+  step01.run();
 
   /*
 

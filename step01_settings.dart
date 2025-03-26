@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'lib/interfaces/DatabaseRepository.dart';
 import 'lib/src/category.dart';
+import 'lib/src/category_user_info.dart';
 import 'lib/src/prompt.dart';
 import 'lib/src/settings.dart';
 import 'lib/src/user.dart';
@@ -13,21 +14,23 @@ class Step01Settings {
   final String userId;
 
   Settings settings = Settings.defaultValues();
-  List<Category> categoriesGame = [];
+  List<Category> categories = [];
+  List<CategoryUserInfo> categoryUserInfos = [];
   List<Prompt> promptsGame = [];
 
   Step01Settings(this.userId, this.dbRep);
 
+  /*
   void initialValues() {
     settings = dbRep.getSettings(userId);
 
     // Aufstelung der Kategorien für das Spiel
     License license = dbRep.getUser(userId).license;
     for (var category in dbRep.getAllCategories()) {
-      categoriesGame.add(category.clone());
+      categories.add(category.clone());
     }
     List<Category> categoriesLicensed =
-        categoriesGame
+        categories
             .where((item) => item.license.index <= license.index)
             .toList();
     Random random = Random();
@@ -38,7 +41,15 @@ class Step01Settings {
         category.isSelected = true; // Passiert erst in UI; hier noch mit random
       }
     }
-    promptsGame = dbRep.getPromptsInGame(userId, categoriesGame);
+    promptsGame = dbRep.getPromptsInGame(userId, categories);
+  }
+  */
+
+  void run() {
+    settings = dbRep.getSettings(userId);
+
+    categories = dbRep.getAllCategories();
+    categoryUserInfos = dbRep.GetCategoryUserInfos(userId);
   }
 
   // Änderung in UI

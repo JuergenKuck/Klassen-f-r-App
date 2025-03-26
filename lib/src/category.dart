@@ -9,10 +9,6 @@ class Category {
   final License license; //      benötigte Lizenz, damit dies Kategorie im Spiel
   //                            verwendet werden kann
 
-  // Die folgenden bools werden nur im Spiel benötigt und nicht in der Db
-  bool isLicensed = false;
-  bool isSelected = false;
-
   // constructor:
   Category(this.id, this.name, {required this.urlImage, required this.license});
 

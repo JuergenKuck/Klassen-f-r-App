@@ -1,5 +1,6 @@
 import '../src/category.dart';
 import '../src/prompt.dart';
+import '../src/category_user_info.dart';
 import '../src/settings.dart';
 import '../src/user.dart';
 import '../src/team.dart';
@@ -13,7 +14,11 @@ abstract class DatabaseRepository {
   void sendSettings(Settings settings);
   Settings getSettings(String userId);
 
-  void clearCategoryIdsSelected(String userId);
+  void sendCategoryUserInfos(
+    String userId,
+    List<CategoryUserInfo> categoryUserInfos,
+  );
+  List<CategoryUserInfo> GetCategoryUserInfos(String userId);
 
   // Category:
 
@@ -29,7 +34,7 @@ abstract class DatabaseRepository {
   // die in der UI selektiert wurden (Settings).
   // für das Spiel und die vorgegebene Anzahl der Begriffe zufällig ausgewählt
   // (Settings).
-  List<Prompt> getPromptsInGame(String userId, List<Category> categoriesGame);
+  List<Prompt> getPromptsInGame(String userId);
 
   // Hier werden nach jeder Runde die in dieser Runde behandelten Begriffe mit
   // der jeweiligen info von prompt.isSolved (aus UI)

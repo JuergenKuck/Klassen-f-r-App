@@ -3,32 +3,40 @@ import 'dart:math';
 
 import '../interfaces/DatabaseRepository.dart';
 import 'category.dart';
-import 'category_ids_selected.dart';
+import 'category_user_info.dart';
 import 'prompt.dart';
 import 'settings.dart';
 import 'team.dart';
 import 'user.dart';
 
 class MockDatabaseRepository extends DatabaseRepository {
-  List<User> users = [];
+  List<User> userMocks = [];
 
-  List<Settings> settingsList = [];
-  List<Category> categories = [];
-  List<Prompt> prompts = [];
-  List<CategoryIdsSelected> categoryIdsSelected = [];
+  List<Settings> settingsMocks = [];
+  List<Category> categoryMocks = [];
+  List<Prompt> promptMocks = [];
+  List<CategoryUserInfo> CategoryUserInfoMocks = [];
 
   // User: der die App installiert hat
   @override
   void sendUser(User user) {
-    users.add(user);
+    // Wenn Mockliste schon einen passenden Eintrag hat,
+    // wird der Eintrag überschrieben. Ansonsten wird er neu erzeugt.
+    if (userMocks.contains(user.id)) {
+      int index = userMocks.indexWhere((item) => item.id == user.id);
+      userMocks[index] = user;
+    } else {
+      userMocks.add(user);
+    }
   }
 
   @override
   User getUser(String userId) {
-    return users.firstWhere(
+    User user = userMocks.firstWhere(
       (user) => user.id == userId,
-      orElse: () => users.first,
+      orElse: () => throw Exception('User with ID $userId not found'),
     );
+    return user;
   }
 
   // Setting; Spieleinstellungen
@@ -36,19 +44,14 @@ class MockDatabaseRepository extends DatabaseRepository {
   void sendSettings(Settings settings) {
     // Wenn in der settingsList schon eine settings mit userId existiert,
     // wird der Eintrag überschrieben. Ansonsten wird er neu erzeugt.
-    if (settingsList.contains(settings.userId)) {
-      int index = settingsList.indexWhere(
+    if (settingsMocks.contains(settings.userId)) {
+      int index = settingsMocks.indexWhere(
         (item) => item.userId == settings.userId,
       );
-      settingsList[index] = settings;
+      settingsMocks[index] = settings;
     } else {
-      settingsList.add(settings);
+      settingsMocks.add(settings);
     }
-  }
-
-  @override
-  void clearCategoryIdsSelected(String userId) {
-    categoryIdsSelected.removeWhere((item) => item.userId == userId);
   }
 
   @override
@@ -56,14 +59,57 @@ class MockDatabaseRepository extends DatabaseRepository {
     // Wenn ein Eintrag für die userId in 'settingsList' existiert wird dieser
     // zurückgegeben. Ansonsten wird eine neue Settings mit Standardwerten
     // erzeugt, in 'settingsList' geadded und zurückgegeben.
-    if (settingsList.contains(userId)) {
-      int index = settingsList.indexWhere((item) => item.userId == userId);
-      return settingsList[index];
+    if (settingsMocks.contains(userId)) {
+      int index = settingsMocks.indexWhere((item) => item.userId == userId);
+      return settingsMocks[index];
     } else {
       //mit Standardwerten erzeugen
       Settings settings = Settings.defaultValues();
-      settingsList.add(settings);
+      settingsMocks.add(settings);
       return settings;
+    }
+  }
+
+  @override
+  void sendCategoryUserInfos(
+    String userId,
+    List<CategoryUserInfo> categoryUserInfos,
+  ) {
+    if (CategoryUserInfoMocks.contains(categoryUserInfos[0].userId)) {
+      for (var category in categoryUserInfos) {
+        int index = CategoryUserInfoMocks.indexWhere(
+          (item) =>
+              item.userId == userId && item.categoryId == category.categoryId,
+        );
+        CategoryUserInfoMocks[index] = category;
+      }
+    } else {
+      CategoryUserInfoMocks.addAll(categoryUserInfos);
+    }
+  }
+
+  List<CategoryUserInfo> GetCategoryUserInfos(String userId) {
+    if (CategoryUserInfoMocks.contains(userId)) {
+      return CategoryUserInfoMocks.where(
+        (item) => item.userId == userId,
+      ).toList();
+    } else {
+      List<CategoryUserInfo> result = [];
+      List<Category> categories = getAllCategories();
+      for (Category category in categories) {
+        User user = getUser(userId);
+        bool isLocked = user.license.index < category.license.index;
+
+        CategoryUserInfo categoryInGame = CategoryUserInfo(
+          userId,
+          categoryId: category.id,
+          isLocked: isLocked,
+          isSelected: true,
+        );
+        result.add(categoryInGame);
+      }
+      CategoryUserInfoMocks.addAll(result);
+      return result;
     }
   }
 
@@ -72,7 +118,7 @@ class MockDatabaseRepository extends DatabaseRepository {
   // Alle in DB gespeicherten Kategorien; Die Kategorien für das Spiel;
   @override
   List<Category> getAllCategories() {
-    return categories;
+    return categoryMocks;
   }
 
   // Prompt:
@@ -82,11 +128,12 @@ class MockDatabaseRepository extends DatabaseRepository {
   // für das Spiel und die vorgegebene Anzahl der Begriffe zufällig ausgewählt
   // (Settings).
   @override
-  List<Prompt> getPromptsInGame(String userId, List<Category> categoriesGame) {
+  List<Prompt> getPromptsInGame(String userId) {
     List<Prompt> result = [];
     Settings settings = getSettings(userId);
+    List<CategoryUserInfo> categoryUserInfos = GetCategoryUserInfos(userId);
     int nPromptGame = settings.nPromptsInGame; // Sollanzahl der Prompts
-    int nPrompt = prompts.length;
+    int nPrompt = promptMocks.length;
     Random random = Random();
     List<int> rnds = [];
     int? rndCurrent;
@@ -95,10 +142,10 @@ class MockDatabaseRepository extends DatabaseRepository {
       bool isWhile = true;
       while (isWhile) {
         rndCurrent = random.nextInt(nPrompt);
-        prompt = prompts[rndCurrent];
-        for (var category in categoriesGame) {
+        prompt = promptMocks[rndCurrent];
+        for (var category in categoryUserInfos) {
           if (category.isSelected) {
-            if (category.id == prompt.categoryId) {
+            if (category.categoryId == prompt.categoryId) {
               isWhile = false;
               for (int rnd in rnds) {
                 if (rnd == rndCurrent) {
@@ -114,8 +161,6 @@ class MockDatabaseRepository extends DatabaseRepository {
       result.add(prompt!);
     }
     return result;
-
-    return [];
   }
 
   // Hier werden nach jeder Runde die in dieser Runde behandelten Begriffe mit
@@ -147,7 +192,7 @@ class MockDatabaseRepository extends DatabaseRepository {
   }
 
   void fillUsers() {
-    users.clear();
+    userMocks.clear();
     for (int i = 1; i <= 10; i++) {
       String _userId = i.toString().padLeft(2, '0');
       User user = User(
@@ -162,8 +207,8 @@ class MockDatabaseRepository extends DatabaseRepository {
   }
 
   void fillCategories() {
-    categories.clear();
-    categories.add(
+    categoryMocks.clear();
+    categoryMocks.add(
       Category(
         '00',
         'Alle Kategorien',
@@ -171,7 +216,7 @@ class MockDatabaseRepository extends DatabaseRepository {
         license: License.free,
       ),
     );
-    categories.add(
+    categoryMocks.add(
       Category(
         '01',
         'Gebrauchsgegenstände',
@@ -179,7 +224,7 @@ class MockDatabaseRepository extends DatabaseRepository {
         license: License.free,
       ),
     );
-    categories.add(
+    categoryMocks.add(
       Category(
         '02',
         'Sportarten',
@@ -187,7 +232,7 @@ class MockDatabaseRepository extends DatabaseRepository {
         license: License.packageA,
       ),
     );
-    categories.add(
+    categoryMocks.add(
       Category(
         '03',
         'Technischer Fortschritt',
@@ -195,10 +240,10 @@ class MockDatabaseRepository extends DatabaseRepository {
         license: License.free,
       ),
     );
-    categories.add(
+    categoryMocks.add(
       Category('04', 'Tiere', urlImage: 'tiere.jpg', license: License.free),
     );
-    categories.add(
+    categoryMocks.add(
       Category(
         '05',
         'Ökologie',
@@ -206,7 +251,7 @@ class MockDatabaseRepository extends DatabaseRepository {
         license: License.packageA,
       ),
     );
-    categories.add(
+    categoryMocks.add(
       Category(
         '06',
         'Spiele und Unterhaltung',
@@ -214,7 +259,7 @@ class MockDatabaseRepository extends DatabaseRepository {
         license: License.free,
       ),
     );
-    categories.add(
+    categoryMocks.add(
       Category(
         '07',
         'Anlässe',
@@ -222,7 +267,7 @@ class MockDatabaseRepository extends DatabaseRepository {
         license: License.packageA,
       ),
     );
-    categories.add(
+    categoryMocks.add(
       Category(
         '08',
         'Geisteswissenschaften',
@@ -230,10 +275,10 @@ class MockDatabaseRepository extends DatabaseRepository {
         license: License.free,
       ),
     );
-    categories.add(
+    categoryMocks.add(
       Category('09', 'Natur', urlImage: 'natur.jpg', license: License.free),
     );
-    categories.add(
+    categoryMocks.add(
       Category(
         '10',
         'Hobbys und Freizeit',
@@ -241,7 +286,7 @@ class MockDatabaseRepository extends DatabaseRepository {
         license: License.free,
       ),
     );
-    categories.add(
+    categoryMocks.add(
       Category(
         '11',
         'Reisen und Abenteuer',
@@ -249,10 +294,10 @@ class MockDatabaseRepository extends DatabaseRepository {
         license: License.free,
       ),
     );
-    categories.add(
+    categoryMocks.add(
       Category('12', 'im Haus', urlImage: 'im_haus.jpg', license: License.free),
     );
-    categories.add(
+    categoryMocks.add(
       Category(
         '13',
         'Gesundheit und Wellness',
@@ -260,7 +305,7 @@ class MockDatabaseRepository extends DatabaseRepository {
         license: License.free,
       ),
     );
-    categories.add(
+    categoryMocks.add(
       Category(
         '14',
         'Essen und Trinken',
@@ -271,14 +316,14 @@ class MockDatabaseRepository extends DatabaseRepository {
   }
 
   void fillPrompts() {
-    prompts.clear();
-    for (Category category in categories) {
+    promptMocks.clear();
+    for (Category category in categoryMocks) {
       String text0 = category.name;
       String categoryId = category.id;
       for (var i = 1; i <= 500; i++) {
         String id = i.toString().padLeft(3, '0');
         String text = text0 + ' $id';
-        prompts.add(Prompt(id, categoryId, text));
+        promptMocks.add(Prompt(id, categoryId, text));
       }
     }
   }
