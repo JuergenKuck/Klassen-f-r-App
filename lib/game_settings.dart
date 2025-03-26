@@ -18,18 +18,30 @@ class GameSettings {
   List<Category> categories = [];
   List<CategoryUserInfo> categoryUserInfos = [];
   List<Prompt> gamePrompts = [];
-  List<GamePromptInfo> gamePromptInfos = [];
+  List<GamePromptInfo> roundPromptInfos = [];
 
   GameSettings(this.userId, this.dbRep) {
     categories = dbRep.getAllCategories();
     settings = dbRep.getSettings(userId);
     categoryUserInfos = dbRep.getCategoryUserInfos(userId);
-    gamePrompts = dbRep.getGamePrompts(userId);
-    gamePromptInfos = dbRep.getGamePromptInfos(userId, gamePrompts);
+    gamePrompts = dbRep.getNewGamePrompts(userId);
+    roundPromptInfos = dbRep.getNewGamePromptInfos(userId, gamePrompts);
 
-    gamePromptInfos[0].isSolved = true;
-    dbRep.sendGamePromptInfos(userId, gamePromptInfos);
-    gamePromptInfos[1].isSolved = true;
-    dbRep.sendGamePromptInfos(userId, gamePromptInfos);
+    roundPromptInfos[0].isSolved = true;
+    dbRep.sendEndRoundPromptInfos(
+      userId,
+      teamNumber: 1,
+      roundPromptInfos: roundPromptInfos,
+    );
+    roundPromptInfos = dbRep.getNewRoundPromptInfos(userId);
+    roundPromptInfos[0].isSolved = true;
+    dbRep.sendEndRoundPromptInfos(
+      userId,
+      teamNumber: 2,
+      roundPromptInfos: roundPromptInfos,
+    );
+    roundPromptInfos = dbRep.getNewRoundPromptInfos(userId);
+
+    //ToDo isFaild!!!!!!!
   }
 }

@@ -18,6 +18,7 @@ class MockDatabaseRepository extends DatabaseRepository {
   List<Prompt> promptMocks = [];
   List<CategoryUserInfo> categoryUserInfoMocks = [];
   List<GamePromptInfo> gamePromptInfoMocks = [];
+  List<GamePromptInfo> roundPromptInfoMocks = [];
 
   MockDatabaseRepository() {
     fillUsers();
@@ -148,7 +149,7 @@ class MockDatabaseRepository extends DatabaseRepository {
   // für das Spiel und die vorgegebene Anzahl der Begriffe zufällig ausgewählt
   // (Settings).
   @override
-  List<Prompt> getGamePrompts(String userId) {
+  List<Prompt> getNewGamePrompts(String userId) {
     List<Prompt> result = [];
 
     Settings settings = getSettings(userId);
@@ -181,7 +182,7 @@ class MockDatabaseRepository extends DatabaseRepository {
   }
 
   @override
-  List<GamePromptInfo> getGamePromptInfos(
+  List<GamePromptInfo> getNewGamePromptInfos(
     String userId,
     List<Prompt> gamePrompts,
   ) {
@@ -191,43 +192,48 @@ class MockDatabaseRepository extends DatabaseRepository {
     //die neuen PromptGameInfos werden gesetzt
     List<GamePromptInfo> result = [];
     for (Prompt prompt in gamePrompts) {
-      result.add(GamePromptInfo(userId, prompt.id, isSolved: false));
+      result.add(GamePromptInfo(userId, prompt.id));
     }
     return result;
   }
 
   @override
-  void sendGamePromptInfos(
-    String userId,
-    List<GamePromptInfo> gamePromptInfos,
-  ) {
-    List<GamePromptInfo> _gamePromptInfoMocks =
-        gamePromptInfoMocks.where((item) => item.userId == userId).toList();
-    if (_gamePromptInfoMocks.length > 0) {
-      for (var vMock in _gamePromptInfoMocks) {
-        int index = gamePromptInfos.indexWhere(
-          (item) => item.promptId == vMock.promptId,
-        );
-        if (index >= 0) {
-          vMock = gamePromptInfos[index];
-        }
-      }
-    } else {
-      gamePromptInfoMocks.addAll(gamePromptInfos);
-    }
+  List<GamePromptInfo> getGamePromptInfos(String userId) {
+    return gamePromptInfoMocks.where((item) => item.userId == userId).toList();
   }
 
   // Hier werden nach jeder Runde die in dieser Runde behandelten Begriffe mit
   // der jeweiligen info von prompt.isSolved (aus UI)
   // gesendet. Muss gesendet werden, weil hiervon die Team.points abhängen
+
   @override
-  void sendPromptsInRound(String teamId, List<Prompt> promptsInRound) {
-    // TODO: implement sendPromptsInRound
+  void sendEndRoundPromptInfos(
+    String userId, {
+    required int teamNumber,
+    required List<GamePromptInfo> roundPromptInfos,
+  }) {
+    List<GamePromptInfo> _gamePromptInfoMocks =
+        gamePromptInfoMocks.where((item) => item.userId == userId).toList();
+    if (_gamePromptInfoMocks.length > 0) {
+      for (var vMock in _gamePromptInfoMocks) {
+        int index = roundPromptInfos.indexWhere(
+          (item) => item.promptId == vMock.promptId,
+        );
+        if (index >= 0) {
+          roundPromptInfos[index].teamNumber = teamNumber;
+          vMock = roundPromptInfos[index];
+        }
+      }
+    } else {
+      gamePromptInfoMocks.addAll(roundPromptInfos);
+    }
   }
+
   @override
-  List<Prompt> getPromptsInRound() {
-    // TODO: implement getPromptsInRound
-    throw UnimplementedError();
+  List<GamePromptInfo> getNewRoundPromptInfos(String userId) {
+    return gamePromptInfoMocks
+        .where((item) => item.userId == userId && !item.isSolved)
+        .toList();
   }
 
   // Team: abhängig von Anzahl der Teams in Settings werden die entsprechenden
