@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import '../game.dart';
 import '../interfaces/DatabaseRepository.dart';
 import '../src/category.dart';
 import '../src/category_user_info.dart';
@@ -8,6 +9,7 @@ import '../src/prompt.dart';
 import '../src/game_prompt_info.dart';
 import '../src/settings.dart';
 import '../src/team.dart';
+import '../src/teamname.dart';
 import '../src/user.dart';
 
 class MockDatabaseRepository extends DatabaseRepository {
@@ -19,11 +21,14 @@ class MockDatabaseRepository extends DatabaseRepository {
   List<CategoryUserInfo> categoryUserInfoMocks = [];
   List<GamePromptInfo> gamePromptInfoMocks = [];
   List<GamePromptInfo> roundPromptInfoMocks = [];
+  List<Team> teamMocks = [];
+  List<Teamname> teamnameMocks = [];
 
   MockDatabaseRepository() {
     fillUsers();
     fillCategories();
     fillPrompts();
+    fillTeamnames();
   }
 
   // User: der die App installiert hat
@@ -159,7 +164,7 @@ class MockDatabaseRepository extends DatabaseRepository {
     List<CategoryUserInfo> categoryUserInfos = getCategoryUserInfos(userId);
 
     Random random = Random();
-    List<int> rnds = [];
+    List<int> rndsPrevious = [];
     int? rndCurrent;
     Prompt? prompt;
 
@@ -167,7 +172,7 @@ class MockDatabaseRepository extends DatabaseRepository {
       bool isWhile = true;
       while (isWhile) {
         rndCurrent = random.nextInt(nPrompt);
-        if (!rnds.contains(rndCurrent)) {
+        if (!rndsPrevious.contains(rndCurrent)) {
           prompt = promptMocks[rndCurrent];
           int index = categoryUserInfos.indexWhere(
             (item) => item.isSelected && item.categoryId == prompt?.categoryId,
@@ -175,7 +180,7 @@ class MockDatabaseRepository extends DatabaseRepository {
           isWhile = index < 0;
         }
       }
-      rnds.add(rndCurrent!);
+      rndsPrevious.add(rndCurrent!);
       result.add(prompt!);
     }
     return result;
@@ -236,12 +241,49 @@ class MockDatabaseRepository extends DatabaseRepository {
         .toList();
   }
 
-  // Team: abhängig von Anzahl der Teams in Settings werden die entsprechenden
-  // Teams in der DB initialisiert und zurück gegeben
+  List<Teamname> getTeamnamesRandom(String userId, int nNames) {
+    List<Teamname> result = [];
+    List<Teamname> teamnames = teamnameMocks;
+    List<int> rndsPrevious = [];
+    for (var i = 0; i < nNames; i++) {
+      int teamNamesIndex = getRandom(rndsPrevious, teamnames.length);
+      result.add(teamnames[teamNamesIndex]);
+    }
+    return result;
+  }
+
+  // Teams:
+  // Die Teams des Users werden gesetzt
   @override
-  List<Team> getTeams() {
-    // TODO: implement getTeams
-    throw UnimplementedError();
+  void initialTeams(String userId) {
+    //Ggf. vorhandene Teams der User werden gelöscht.
+    teamMocks.removeWhere((item) => item.userId == userId);
+
+    List<Team> teams = [];
+    Settings settings = getSettings(userId);
+    List<Teamname> teamnames = getTeamnamesRandom(userId, settings.nTeams);
+    for (var i = 0; i < settings.nTeams; i++) {
+      teams.add(
+        Team(
+          userId,
+          i + 1,
+          teamnames[i].name,
+          color: "ToDo",
+          urlImage: "ToDo",
+          points: 0,
+        ),
+      );
+    }
+
+    //List<String> teamnames =get
+
+    //die übergebenen Teams werden gesetzt
+    teamMocks.addAll(teams);
+  }
+
+  // Die Teams des Users werden zurück gegeben
+  List<Team> getTeams(String userId) {
+    return teamMocks.where((item) => item.userId == userId).toList();
   }
 
   // Round:
@@ -250,6 +292,27 @@ class MockDatabaseRepository extends DatabaseRepository {
   void RoundStart() {
     // TODO: implement RoundStart
   }
+
+  // Routines für Bibliothek
+  int getRandom(List<int> rndsPrevious, int nMax) {
+    Random random = Random();
+    int rndCurrent = 0;
+    bool isWhile = true;
+    while (isWhile) {
+      rndCurrent = random.nextInt(nMax);
+      isWhile = false;
+      for (int rnd in rndsPrevious) {
+        if (rndCurrent == rnd) {
+          isWhile = true;
+          break;
+        }
+      }
+    }
+    rndsPrevious.add(rndCurrent);
+    return rndCurrent;
+  }
+
+  // Methoden, die doe Mocks-Listen füllen, damit schon etwas zum Testen da ist
 
   void fillUsers() {
     userMocks.clear();
@@ -385,6 +448,55 @@ class MockDatabaseRepository extends DatabaseRepository {
         String text = text0 + ' $id';
         promptMocks.add(Prompt(id, categoryId, text));
       }
+    }
+  }
+
+  void fillTeamnames() {
+    List<String> teamnameStrings = [
+      "Die Unbesiegbaren",
+      "Team Chaos",
+      "Die Flitzpiepen",
+      "Die Superhelden",
+      "Das Dream Team",
+      "Blitz und Donner",
+      "Die Rattenfänger",
+      "Die Bärenbande",
+      "Power Rangers",
+      "Die fliegenden Fische",
+      "Die Nerdherden",
+      "Meister der Unordnung",
+      "Die Schlafwandler",
+      "Team Kaffeekommando",
+      "Schlaue Füchse",
+      "Die Couch Potatoes",
+      "Die Rennschnitzel",
+      "Die Keks-Helden",
+      "Flinke Finger",
+      "Die Turboschnecken",
+      "Das Chaos-Kommando",
+      "Die Pizzafreunde",
+      "Team Überflieger",
+      "Die Wilden Wiesel",
+      "Die Goldenen Löffel",
+      "Die Glücksritter",
+      "Das Team der Unmöglichkeit",
+      "Dppelte Portion",
+      "Die Bienenkönige",
+      "Die Kampf-Pinguine",
+      "Die Hühner im Wind",
+      "Spaghetti-Junkies",
+      "Die Quasselstrippen",
+      "Die Super-Nasen",
+      "Team Witzig",
+      "Die Schnellen Giraffen",
+      "Power von der Couch",
+      "Die Knallköpfe",
+      "Die Schokoladenbomben",
+      "Die Spaßkanonen",
+    ];
+    teamnameMocks.clear();
+    for (String str in teamnameStrings) {
+      teamnameMocks.add(Teamname(str));
     }
   }
 }

@@ -3,6 +3,7 @@ import '../src/prompt.dart';
 import '../src/category_user_info.dart';
 import '../src/game_prompt_info.dart';
 import '../src/settings.dart';
+import '../src/teamname.dart';
 import '../src/user.dart';
 import '../src/team.dart';
 
@@ -60,9 +61,14 @@ abstract class DatabaseRepository {
   // gelösten Begriffen geladen.
   List<GamePromptInfo> getNewRoundPromptInfos(String userId);
 
-  // Team: abhängig von Anzahl der Teams in Settings werden die entsprechenden
-  // Teams in der DB initialisiert und zurück gegeben
-  List<Team> getTeams();
+  List<Teamname> getTeamnamesRandom(String userId, int nNames);
+
+  // Teams:
+  // Die Teams des Users werden gesetzt
+  void initialTeams(String userId);
+
+  // Die Teams des Users werden zurück gegeben
+  List<Team> getTeams(String userId);
 
   // Round:
   // Hier wird z.B. das nächste spielende Team gesetzt

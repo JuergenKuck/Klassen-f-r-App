@@ -14,6 +14,6 @@ class Team {
     this.name, {
     required this.color,
     required this.urlImage,
-    required this.points,
+    required this.points
   });
 }

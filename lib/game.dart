@@ -1,8 +1,6 @@
 import 'interfaces/DatabaseRepository.dart';
 import 'game_settings.dart';
 
-String userId = '01';
-
 class Game {
   final String userId;
   final DatabaseRepository dbRep;

@@ -6,6 +6,7 @@ import 'src/category_user_info.dart';
 import 'src/prompt.dart';
 import 'src/game_prompt_info.dart';
 import 'src/settings.dart';
+import 'src/team.dart';
 import 'src/user.dart';
 
 class GameSettings {
@@ -17,6 +18,7 @@ class GameSettings {
   Settings settings = Settings.defaultValues();
   List<Category> categories = [];
   List<CategoryUserInfo> categoryUserInfos = [];
+  List<Team> teams = [];
   List<Prompt> gamePrompts = [];
   List<GamePromptInfo> roundPromptInfos = [];
 
@@ -27,17 +29,20 @@ class GameSettings {
     gamePrompts = dbRep.getNewGamePrompts(userId);
     roundPromptInfos = dbRep.getNewGamePromptInfos(userId, gamePrompts);
 
+    dbRep.initialTeams(userId);
+
+    teams = dbRep.getTeams(userId);
     roundPromptInfos[0].isSolved = true;
     dbRep.sendEndRoundPromptInfos(
       userId,
-      teamNumber: 1,
+      teamNumber: teams[0].number,
       roundPromptInfos: roundPromptInfos,
     );
     roundPromptInfos = dbRep.getNewRoundPromptInfos(userId);
     roundPromptInfos[0].isSolved = true;
     dbRep.sendEndRoundPromptInfos(
       userId,
-      teamNumber: 2,
+      teamNumber: teams[1].number,
       roundPromptInfos: roundPromptInfos,
     );
     roundPromptInfos = dbRep.getNewRoundPromptInfos(userId);
