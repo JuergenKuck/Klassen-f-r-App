@@ -18,6 +18,8 @@ void main() {
   DatabaseRepository dbRep = MockDatabaseRepository();
 
   Game game = Game(userId, dbRep);
+  game.run();
+
   print('Ende\n');
 }
 

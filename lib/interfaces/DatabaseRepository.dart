@@ -16,21 +16,21 @@ abstract class DatabaseRepository {
   void sendSettings(Settings settings);
   Settings getSettings(String userId);
 
-  void sendCategoryUserInfos(
-    String userId,
-    List<CategoryUserInfo> categoryUserInfos,
-  );
+  void sendCategoryUserInfos(String userId, List<CategoryUserInfo> categoryUserInfos);
   List<CategoryUserInfo> getCategoryUserInfos(String userId);
 
   // Category:
+  Category getCategory(String categorieId);
+  void sendCategory(Category category);
 
-  // Alle in DB gespeicherten Kategorien; Die Kategorien für das Spiel;
   List<Category> getAllCategories();
 
-  // Die vom User in der UI (Settings) ausgewählten Kategorien
-  //List<Category> getCategoriesSettings(String userId);
-
   // Prompt:
+
+  // Routine zum Laden aller Prompts
+  //List<Prompt> gatAllPrompts();
+  // Routine zum senden einer Liste von Prompts
+  void sendPrompts(List<Prompt> prompts);
 
   // Die im Spiel zu erratenen Begriffe; Es wird aus den Kategorien gewählt,
   // die in der UI selektiert wurden (Settings).
@@ -40,10 +40,7 @@ abstract class DatabaseRepository {
 
   // Hier werden die Begriffinfos für das Spiel geladen,
   // ohne team.number und team.isSolved, weil diese sich erst beim Spiel ergeben.
-  List<GamePromptInfo> getNewGamePromptInfos(
-    String userId,
-    List<Prompt> promptsInGame,
-  );
+  List<GamePromptInfo> getNewGamePromptInfos(String userId, List<Prompt> promptsInGame);
 
   // Hier werden die BegriffInfos nochmals für das Spiel geladen,
   // ohne team.number und team.isSolved, weil diese sich erst beim Spiel ergeben.
@@ -64,9 +61,6 @@ abstract class DatabaseRepository {
   List<Teamname> getTeamnamesRandom(String userId, int nNames);
 
   // Teams:
-  // Die Teams des Users werden gesetzt
-  void initialTeams(String userId);
-
   // Die Teams des Users werden zurück gegeben
   List<Team> getTeams(String userId);
 
