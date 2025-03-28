@@ -66,8 +66,4 @@ abstract class DatabaseRepository {
 
   //Die TeamPoints werden gesetzt
   Team getTeamWithModPoints(String userId, int teamNumber);
-
-  // Round:
-  // Hier wird z.B. das nächste spielende Team gesetzt
-  void RoundStart();
 }

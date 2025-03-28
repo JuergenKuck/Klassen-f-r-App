@@ -2,6 +2,7 @@ import 'interfaces/DatabaseRepository.dart';
 import 'game_settings.dart';
 import 'src/game_prompt_info.dart';
 import 'src/prompt.dart';
+import 'src/settings.dart';
 import 'src/team.dart';
 
 class Game {
@@ -13,6 +14,7 @@ class Game {
   List<Prompt> gamePrompts = [];
   List<GamePromptInfo> roundPromptInfos = [];
   List<Team> teams = [];
+  int iTeam = 0;
 
   Game(this.userId, this.dbRep) {
     gameSettings = GameSettings(this.userId, this.dbRep);
@@ -26,15 +28,19 @@ class Game {
     roundPromptInfos[1].isSolved = true;
     roundPromptInfos[3].isSolved = true;
     roundPromptInfos[4].isSolved = true;
-    dbRep.sendEndRoundPromptInfos(userId, teamNumber: teams[0].number, roundPromptInfos: roundPromptInfos);
-
-    teams[0] = dbRep.getTeamWithModPoints(userId, 0);
-    roundPromptInfos = dbRep.getNewRoundPromptInfos(userId);
-
+    nextRound();
     roundPromptInfos[0].isSolved = true;
     roundPromptInfos[1].isSolved = true;
-    dbRep.sendEndRoundPromptInfos(userId, teamNumber: teams[1].number, roundPromptInfos: roundPromptInfos);
+    nextRound();
+  }
+
+  void nextRound() {
+    dbRep.sendEndRoundPromptInfos(userId, teamNumber: teams[iTeam].number, roundPromptInfos: roundPromptInfos);
+    teams[iTeam] = dbRep.getTeamWithModPoints(userId, teams[iTeam].number);
     roundPromptInfos = dbRep.getNewRoundPromptInfos(userId);
-    teams[1] = dbRep.getTeamWithModPoints(userId, 1);
+    iTeam++;
+    if (iTeam > gameSettings!.settings.nTeams) {
+      iTeam = 0;
+    }
   }
 }

@@ -302,13 +302,6 @@ class MockDatabaseRepository extends DatabaseRepository {
     return TeamWithModPoints;
   }
 
-  // Round:
-  // Hier wird z.B. das nächste spielende Team gesetzt
-  @override
-  void RoundStart() {
-    // TODO: implement RoundStart
-  }
-
   // Routines für Bibliothek
   int getRandom(List<int> rndsPrevious, int nMax) {
     Random random = Random();
