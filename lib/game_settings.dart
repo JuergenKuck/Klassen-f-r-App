@@ -33,11 +33,17 @@ class GameSettings {
 
     teams = dbRep.getTeams(userId);
     roundPromptInfos[0].isSolved = true;
+    roundPromptInfos[1].isSolved = true;
+    roundPromptInfos[3].isSolved = true;
+    roundPromptInfos[4].isSolved = true;
     dbRep.sendEndRoundPromptInfos(
       userId,
       teamNumber: teams[0].number,
       roundPromptInfos: roundPromptInfos,
     );
+
+    teams[0] = dbRep.getTeamWithModPoints(userId, 0);
+
     roundPromptInfos = dbRep.getNewRoundPromptInfos(userId);
     roundPromptInfos[0].isSolved = true;
     dbRep.sendEndRoundPromptInfos(

@@ -256,34 +256,61 @@ class MockDatabaseRepository extends DatabaseRepository {
   // Die Teams des Users werden gesetzt
   @override
   void initialTeams(String userId) {
-    //Ggf. vorhandene Teams der User werden gelöscht.
-    teamMocks.removeWhere((item) => item.userId == userId);
-
-    List<Team> teams = [];
     Settings settings = getSettings(userId);
     List<Teamname> teamnames = getTeamnamesRandom(userId, settings.nTeams);
     for (var i = 0; i < settings.nTeams; i++) {
-      teams.add(
-        Team(
-          userId,
-          i + 1,
-          teamnames[i].name,
-          color: "ToDo",
-          urlImage: "ToDo",
-          points: 0,
-        ),
+      Team team = Team(
+        userId,
+        i,
+        teamnames[i].name,
+        color: "ToDo",
+        urlImage: "ToDo",
+        points: 0,
       );
+      int index = teamMocks.indexWhere(
+        (item) => item.userId == userId && item.number == i,
+      );
+      if (index >= 0) {
+        teamMocks[index] = team;
+      } else {
+        teamMocks.add(team);
+      }
     }
-
-    //List<String> teamnames =get
-
-    //die übergebenen Teams werden gesetzt
-    teamMocks.addAll(teams);
   }
 
+  @override
   // Die Teams des Users werden zurück gegeben
   List<Team> getTeams(String userId) {
     return teamMocks.where((item) => item.userId == userId).toList();
+  }
+
+  @override
+  //Die TeamPoints werden gesetzt
+  Team getTeamWithModPoints(String userId, int teamNumber) {
+    int teamPoints =
+        gamePromptInfoMocks
+            .where(
+              (item) =>
+                  item.userId == userId &&
+                  item.teamNumber == teamNumber &&
+                  item.isSolved,
+            )
+            .length;
+    // Index von Team wird bestimmt
+    int index = teamMocks.indexWhere(
+      (item) => item.userId == userId && item.number == teamNumber,
+    );
+    // Team wird geladen
+    Team team = teamMocks[index];
+
+    // modifiziertes Team mit aktuellen Punkten wird erstellt
+    Team TeamWithModPoints = team.getTeamWithPoints(teamPoints);
+
+    // modifiziertes Team wird gesetzt
+    teamMocks[index] = TeamWithModPoints;
+
+    // modifiziertes Team wird zurückgegeben
+    return TeamWithModPoints;
   }
 
   // Round:
