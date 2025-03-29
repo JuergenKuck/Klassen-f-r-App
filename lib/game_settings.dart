@@ -4,7 +4,7 @@ import 'interfaces/DatabaseRepository.dart';
 import 'src/category.dart';
 import 'src/category_user_info.dart';
 import 'src/prompt.dart';
-import 'src/game_prompt_info.dart';
+import 'src/prompt_info.dart';
 import 'src/settings.dart';
 import 'src/team.dart';
 import 'src/user.dart';

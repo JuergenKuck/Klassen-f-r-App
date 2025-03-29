@@ -1,7 +1,7 @@
 import '../src/category.dart';
 import '../src/prompt.dart';
 import '../src/category_user_info.dart';
-import '../src/game_prompt_info.dart';
+import '../src/prompt_info.dart';
 import '../src/settings.dart';
 import '../src/teamname.dart';
 import '../src/user.dart';
@@ -16,11 +16,10 @@ abstract class DatabaseRepository {
   void sendSettings(Settings settings);
   Settings getSettings(String userId);
 
-  void sendCategoryUserInfos(String userId, List<CategoryUserInfo> categoryUserInfos);
+  // Hier werden die CategoryUserInfos (categoryId) des Users (userId) geholt
   List<CategoryUserInfo> getCategoryUserInfos(String userId);
 
   // Category:
-  Category getCategory(String categorieId);
   void sendCategory(Category category);
 
   List<Category> getAllCategories();
@@ -32,31 +31,23 @@ abstract class DatabaseRepository {
   // Routine zum senden einer Liste von Prompts
   void sendPrompts(List<Prompt> prompts);
 
-  // Die im Spiel zu erratenen Begriffe; Es wird aus den Kategorien gewählt,
+  // Ids der im Spiel zu erratenen Begriffe; Es wird aus den Kategorien gewählt,
   // die in der UI selektiert wurden (Settings).
   // für das Spiel und die vorgegebene Anzahl der Begriffe zufällig ausgewählt
   // (Settings).
-  List<Prompt> getNewGamePrompts(String userId);
 
   // Hier werden die Begriffinfos für das Spiel geladen,
   // ohne team.number und team.isSolved, weil diese sich erst beim Spiel ergeben.
-  List<GamePromptInfo> getNewGamePromptInfos(String userId, List<Prompt> promptsInGame);
+  List<PromptInfo> getGamePromptInfos(String userId);
 
-  // Hier werden die BegriffInfos nochmals für das Spiel geladen,
-  // ohne team.number und team.isSolved, weil diese sich erst beim Spiel ergeben.
-  List<GamePromptInfo> getGamePromptInfos(String userId);
+  List<PromptInfo> getNextRoundPromptInfos(String userId);
 
-  // Hier werden nach jeder Runde die in dieser Runde behandelten BegriffInfos
-  // (aus UI) gesendet. wird benötigt, weil hiervon die Team.points abhängen
-  void sendEndRoundPromptInfos(
-    String userId, {
-    required int teamNumber,
-    required List<GamePromptInfo> roundPromptInfos,
-  });
+  // Wird nach jeder Änderung von IsSolved gesendet; hiervon hängen die Team.points ab.
+  void sendPromptInfo(String userId, {required int teamNumber, required bool isSolved, required PromptInfo promptInfo});
 
   // Hier werden die PromptInfos für eine neuer Runde mit den die noch nicht
   // gelösten Begriffen geladen.
-  List<GamePromptInfo> getNewRoundPromptInfos(String userId);
+  // List<GamePromptInfo> getNewRoundPromptInfos(String userId);
 
   List<Teamname> getTeamnamesRandom(String userId, int nNames);
 
@@ -65,5 +56,5 @@ abstract class DatabaseRepository {
   List<Team> getTeams(String userId);
 
   //Die TeamPoints werden gesetzt
-  Team getTeamWithModPoints(String userId, int teamNumber);
+  Team getTeamUpdated(String userId, int teamNumber);
 }

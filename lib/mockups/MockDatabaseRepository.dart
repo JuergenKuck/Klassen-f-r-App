@@ -6,7 +6,7 @@ import '../interfaces/DatabaseRepository.dart';
 import '../src/category.dart';
 import '../src/category_user_info.dart';
 import '../src/prompt.dart';
-import '../src/game_prompt_info.dart';
+import '../src/prompt_info.dart';
 import '../src/settings.dart';
 import '../src/team.dart';
 import '../src/teamname.dart';
@@ -19,8 +19,7 @@ class MockDatabaseRepository extends DatabaseRepository {
   List<Category> categoryMocks = [];
   List<Prompt> promptMocks = [];
   List<CategoryUserInfo> categoryUserInfoMocks = [];
-  List<GamePromptInfo> gamePromptInfoMocks = [];
-  List<GamePromptInfo> roundPromptInfoMocks = [];
+  List<PromptInfo> promptInfoMocks = [];
   List<Team> teamMocks = [];
   List<Teamname> teamnameMocks = [];
 
@@ -83,20 +82,6 @@ class MockDatabaseRepository extends DatabaseRepository {
   }
 
   @override
-  void sendCategoryUserInfos(String userId, List<CategoryUserInfo> categoryUserInfos) {
-    bool isContain = categoryUserInfoMocks.any((item) => item.userId == categoryUserInfos[0].userId);
-    if (isContain) {
-      for (var category in categoryUserInfos) {
-        int index = categoryUserInfoMocks.indexWhere(
-          (item) => item.userId == userId && item.categoryId == category.categoryId,
-        );
-        categoryUserInfoMocks[index] = category;
-      }
-    } else {
-      categoryUserInfoMocks.addAll(categoryUserInfos);
-    }
-  }
-
   List<CategoryUserInfo> getCategoryUserInfos(String userId) {
     bool isContain = categoryUserInfoMocks.any((item) => item.userId == userId);
     if (isContain) {
@@ -131,11 +116,6 @@ class MockDatabaseRepository extends DatabaseRepository {
   }
 
   // Category:
-  @override
-  Category getCategory(String categorieId) {
-    return categoryMocks.where((item) => item.id == categorieId).first;
-  }
-
   @override
   void sendCategory(Category category) {
     int index = categoryMocks.indexWhere((item) => item.id == category.id);
@@ -172,8 +152,8 @@ class MockDatabaseRepository extends DatabaseRepository {
   // für das Spiel und die vorgegebene Anzahl der Begriffe zufällig ausgewählt
   // (Settings).
   @override
-  List<Prompt> getNewGamePrompts(String userId) {
-    List<Prompt> result = [];
+  List<PromptInfo> getGamePromptInfos(String userId) {
+    List<PromptInfo> gamePromptInfos = [];
 
     Settings settings = getSettings(userId);
     int nPromptGame = settings.nPromptsInGame; // Sollanzahl der Prompts
@@ -197,58 +177,46 @@ class MockDatabaseRepository extends DatabaseRepository {
         }
       }
       rndsPrevious.add(rndCurrent!);
-      result.add(prompt!);
+      PromptInfo gamePromptInfo = PromptInfo(userId, i, prompt!.id, teamNumber: -1, isSolved: false);
+      gamePromptInfos.add(gamePromptInfo);
     }
-    return result;
-  }
 
-  @override
-  List<GamePromptInfo> getNewGamePromptInfos(String userId, List<Prompt> gamePrompts) {
-    //vorherige PromptGameInfos der Users werden gelöscht.
-    gamePromptInfoMocks.removeWhere((item) => item.userId == userId);
-
-    //die neuen PromptGameInfos werden gesetzt
-    List<GamePromptInfo> result = [];
-    for (Prompt prompt in gamePrompts) {
-      result.add(GamePromptInfo(userId, prompt.id));
+    // in gamePromptInfoMocks berücksichtigen
+    for (var gamePromptInfo in gamePromptInfos) {
+      int index = promptInfoMocks.indexWhere((item) => item.promptInfoNumber == gamePromptInfo.promptInfoNumber);
+      if (index >= 0) {
+        promptInfoMocks[index] = gamePromptInfo;
+      } else {
+        promptInfoMocks.add(gamePromptInfo);
+      }
     }
-    return result;
+    return gamePromptInfos;
   }
 
   @override
-  List<GamePromptInfo> getGamePromptInfos(String userId) {
-    return gamePromptInfoMocks.where((item) => item.userId == userId).toList();
+  List<PromptInfo> getNextRoundPromptInfos(String userId) {
+    return promptInfoMocks.where((item) => item.userId == userId && !item.isSolved).toList();
   }
 
-  // Hier werden nach jeder Runde die in dieser Runde behandelten Begriffe mit
-  // der jeweiligen info von prompt.isSolved (aus UI)
-  // gesendet. Muss gesendet werden, weil hiervon die Team.points abhängen
-
   @override
-  void sendEndRoundPromptInfos(
+  void sendPromptInfo(
     String userId, {
     required int teamNumber,
-    required List<GamePromptInfo> roundPromptInfos,
+    required bool isSolved,
+    required PromptInfo promptInfo,
   }) {
-    List<GamePromptInfo> _gamePromptInfoMocks = gamePromptInfoMocks.where((item) => item.userId == userId).toList();
-    if (_gamePromptInfoMocks.length > 0) {
-      for (var vMock in _gamePromptInfoMocks) {
-        int index = roundPromptInfos.indexWhere((item) => item.promptId == vMock.promptId);
-        if (index >= 0) {
-          roundPromptInfos[index].teamNumber = teamNumber;
-          vMock = roundPromptInfos[index];
-        }
-      }
+    PromptInfo modPromptInfo = promptInfo.getModPromptInfo(teamNumber, isSolved);
+    int index = promptInfoMocks.indexWhere(
+      (item) => item.userId == userId && item.promptInfoNumber == promptInfo.promptInfoNumber,
+    );
+    if (index >= 0) {
+      promptInfoMocks[index] = modPromptInfo;
     } else {
-      gamePromptInfoMocks.addAll(roundPromptInfos);
+      promptInfoMocks.add(modPromptInfo);
     }
   }
 
   @override
-  List<GamePromptInfo> getNewRoundPromptInfos(String userId) {
-    return gamePromptInfoMocks.where((item) => item.userId == userId && !item.isSolved).toList();
-  }
-
   List<Teamname> getTeamnamesRandom(String userId, int nNames) {
     List<Teamname> result = [];
     List<Teamname> teamnames = teamnameMocks;
@@ -282,11 +250,9 @@ class MockDatabaseRepository extends DatabaseRepository {
 
   @override
   //Die TeamPoints werden gesetzt
-  Team getTeamWithModPoints(String userId, int teamNumber) {
+  Team getTeamUpdated(String userId, int teamNumber) {
     int teamPoints =
-        gamePromptInfoMocks
-            .where((item) => item.userId == userId && item.teamNumber == teamNumber && item.isSolved)
-            .length;
+        promptInfoMocks.where((item) => item.userId == userId && item.teamNumber == teamNumber && item.isSolved).length;
     // Index von Team wird bestimmt
     int index = teamMocks.indexWhere((item) => item.userId == userId && item.number == teamNumber);
     // Team wird geladen
